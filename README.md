@@ -11,8 +11,6 @@ The system follows a **modular pipeline** consisting of three independent analys
 The goal of this tool is to identify attempts to hide malicious activity, such as:
 
 - Log clearing
-- Privilege abuse
-- Suspicious process execution
 - Timestamp manipulation (timestomping)
 - Unusual behavioral patterns over time
 
@@ -104,5 +102,10 @@ An event is considered valid only when **two or more independent modules corrobo
 
 ---
 
-## Folder Structure
 
+---
+
+## Conclusion
+
+This tool demonstrates that **anti-forensic activity cannot reliably hide across all forensic layers**.  
+By correlating logs, file system artifacts, and behavior, the system reduces false positives while maintaining strong detection coverage.
