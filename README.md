@@ -1,8 +1,3 @@
-That's a great final step. A clear `README.md` is essential for any project, especially one with multiple integrated modules. It acts as the definitive user manual and defense summary.
-
-Here is a complete, well-structured `README.md` file for your Automated Anti-Forensics Correlation Engine.
-
-```markdown
 # 🛡️ Automated Anti-Forensics Correlation Engine
 
 ## Project Summary
@@ -71,7 +66,3 @@ pip install -r requirements.txt
 
 * **`correlation_report.json`**: The final, detailed report showing every suspicious file and the evidence from Modules 1, 2, and 3 that corroborates it. This is the **High-Confidence Evidence** provided to the analyst.
 * **`correlation_report.csv`**: A summary table for quick review, listing the file path, the USN time, and the number of modules (2 or 3) that confirmed the anomaly.
-
-```
-
-```
