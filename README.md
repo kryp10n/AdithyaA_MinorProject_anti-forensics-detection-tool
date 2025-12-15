@@ -106,9 +106,6 @@ An event is considered valid only when **two or more independent modules corrobo
 
 ---
 
-
----
-
 ## Conclusion
 
 This tool demonstrates that **anti-forensic activity cannot reliably hide across all forensic layers**.  
