@@ -1,68 +1,108 @@
-# 🛡️ Automated Anti-Forensics Correlation Engine
+# Detecting Anti-Forensics in Windows Systems
 
-## Project Summary
+This project is a forensic analysis tool designed to **detect anti-forensic activities** on Windows systems by correlating evidence from **event logs**, **file system metadata**, and **behavioral anomalies**.
 
-This project implements a multi-layered system designed to automatically detect anti-forensic techniques (like log clearing and timestomping) in Windows 10/11 forensic images. The system integrates three independent analysis modules and uses a final Correlation Engine to validate findings, dramatically reducing false positives and improving the efficiency of forensic investigations.
-
-### The Core Novelty (The 2-out-of-3 Rule)
-
-The system flags an incident as **High-Confidence Evidence** only when a suspicious event or file is independently corroborated (matched temporally and/or by entity) by **two or more** of the three modules.
+The system follows a **modular pipeline** consisting of three independent analysis modules and a final **correlation engine** that combines their findings to produce high-confidence results.
 
 ---
 
-## 🛠️ Architecture and Modules
+## Tool Overview
 
-| Module | Core Function | Artifacts Analyzed | Output |
-| :--- | :--- | :--- | :--- |
-| **Module 1 (Rule-Based Log)** | Extracts high-value Windows Event IDs (Log Clears, Time Changes, Process Creations). | Security.evtx, System.evtx | `module1_output.csv` (Filtered list of known suspicious events) |
-| **Module 2 (Artifact Comparison)** | Detects **Timestomping** by comparing the file's claimed **MFT Creation Time** (the lie) against the verified **USN Journal Transaction Time** (the truth). | MFT (`host_mft.csv`), USN Journal (`usn_dump.csv`) | `module2_smart.csv` (High-confidence forgery candidates, filtered for system noise) |
-| **Module 3 (ML Anomaly Detection)** | Uses **Isolation Forest** to flag statistically anomalous time windows in the overall volume and composition of event log activity. | Raw .evtx logs (processed into Time Window Feature Vectors) | `module3_anomalies.csv` (Time windows with high anomaly scores) |
-| **Correlation Engine (The Brain)** | **Automated Validation.** Correlates the output of all three modules (M1, M2, M3) based on shared time and file identifiers (FRN/Path). | All module output files | `correlation_report.json` |
+The goal of this tool is to identify attempts to hide malicious activity, such as:
 
----
+- Log clearing
+- Privilege abuse
+- Suspicious process execution
+- Timestamp manipulation (timestomping)
+- Unusual behavioral patterns over time
 
-## 🚀 Getting Started
-
-### 1. Prerequisites
-
-This project requires Python 3.11.9.
-
-```bash
-# We recommend using a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-
-```
-
-###2. InstallationInstall all required Python dependencies:
-
-```bash
-pip install -r requirements.txt
-
-```
-
-*(Note: `requirements.txt` should contain `pandas`, `scikit-learn`, `python-evtx`, etc.)*
-
-###3. Data PreparationPlace the forensic artifacts into the designated `input/` directory:
-
-| Artifact | Source Tool | Required File(s) |
-| --- | --- | --- |
-| **Event Logs** | `EvtxECmd` or direct extraction | `Security.evtx`, `System.evtx` |
-| **MFT** | `MFTECmd` | `host_mft.csv` |
-| **USN Journal** | `fsutil usn readjournal` | `usn_dump.csv` (Ensure UTF-16 encoding is handled) |
-
-###4. Execution OrderRun the modules sequentially. The output of each step is placed in the `output/` directory and consumed by the next step.
-
-| Step | Command | Purpose |
-| --- | --- | --- |
-| **1. Collect Rules** | `python module1_log_parser.py` | Extracts suspicious EIDs. |
-| **2. Collect Timestamps** | `python module2_timestamp_compare.py` | Detects MFT/USN inconsistencies. |
-| **3. Detect Patterns** | `python module3_anomaly_detector.py` | Converts logs to features and applies Isolation Forest. |
-| **4. Validate Findings** | `python correlation_engine.py` | Runs the 2-out-of-3 rule and generates the final report. |
+Each module analyzes a **different forensic artifact**, ensuring that bypassing one layer does not evade detection.
 
 ---
 
-##📄 Final ReportThe definitive output is found in the `output/` folder:
+## Architecture
 
-* **`correlation_report.json`**: The final, detailed report showing every suspicious file and the evidence from Modules 1, 2, and 3 that corroborates it. This is the **High-Confidence Evidence** provided to the analyst.
-* **`correlation_report.csv`**: A summary table for quick review, listing the file path, the USN time, and the number of modules (2 or 3) that confirmed the anomaly.
+![System Architecture](architecture.png)
+
+---
+
+## Module 1 — Windows Event Log Analysis
+
+### Purpose
+Identify **explicitly suspicious actions** recorded in Windows Event Logs using rule-based detection.
+
+### Input
+- `input/Security.evtx`
+- `input/System.evtx`
+
+### Method
+- Parses EVTX files
+- Filters events using known high-risk Event IDs (e.g. log clearing, time change, privilege escalation, process creation)
+
+### Output
+- `output/module1_output.csv`
+
+---
+
+## Module 2 — NTFS Timestamp Inconsistency Detection
+
+### Purpose
+Detect **timestomping and file metadata manipulation** by comparing NTFS timestamps against journaled file activity.
+
+### Input
+- `$MFT` parsed via MFTECmd (CSV)
+- `$UsnJrnl:$J` parsed to CSV
+
+### Method
+- File Reference Number (FRN) correlation
+- Timestamp comparison between MFT and USN
+- Smart filtering to remove normal system noise
+
+### Outputs
+- `output/module2_raw.csv` — all timestamp mismatches  
+- `output/module2_filtered.csv` — basic suspicious mismatches  
+- `output/module2_smart.csv` — high-confidence timestomp detections
+
+---
+
+## Module 3 — Behavioral Anomaly Detection
+
+### Purpose
+Detect **statistical anomalies** in system behavior that may indicate stealthy or unknown attacks.
+
+### Input
+- `input/module3_all_events.csv`  
+  (Comprehensive event export from EVTX logs)
+
+### Method
+- Sliding time-window feature extraction
+- Event frequency modeling
+- Isolation Forest for anomaly detection
+
+### Outputs
+- `output/module3_features.csv`
+- `output/module3_anomalies.csv`
+
+---
+
+## Correlation Engine
+
+### Purpose
+Combine evidence from multiple modules to generate **high-confidence forensic alerts**.
+
+### Inputs
+- `output/module1_output.csv`
+- `output/module2_smart.csv`
+- `output/module3_anomalies.csv`
+
+### Correlation Logic
+An event is considered valid only when **two or more independent modules corroborate the same activity** within a related time window.
+
+### Output
+- Final correlated report (CSV / JSON)
+- No report is generated if no corroborated evidence exists
+
+---
+
+## Folder Structure
+
