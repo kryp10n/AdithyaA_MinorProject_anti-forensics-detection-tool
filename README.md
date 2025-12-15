@@ -38,7 +38,7 @@ Identify **explicitly suspicious actions** recorded in Windows Event Logs using 
 - Filters events using known high-risk Event IDs (e.g. log clearing, time change, privilege escalation, process creation)
 
 ### Output
-- `output/module1_output.csv`
+- `output/module1_output.csv` - Events from rule table
 ![System Architecture](o1.png)
 
 ---
