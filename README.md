@@ -39,6 +39,7 @@ Identify **explicitly suspicious actions** recorded in Windows Event Logs using 
 
 ### Output
 - `output/module1_output.csv`
+![System Architecture](o1.png)
 
 ---
 
@@ -60,6 +61,7 @@ Detect **timestomping and file metadata manipulation** by comparing NTFS timesta
 - `output/module2_raw.csv` — all timestamp mismatches  
 - `output/module2_filtered.csv` — basic suspicious mismatches  
 - `output/module2_smart.csv` — high-confidence timestomp detections
+![System Architecture](o2.png)
 
 ---
 
@@ -80,6 +82,7 @@ Detect **statistical anomalies** in system behavior that may indicate stealthy o
 ### Outputs
 - `output/module3_features.csv`
 - `output/module3_anomalies.csv`
+![System Architecture](o3.png)
 
 ---
 
@@ -99,6 +102,7 @@ An event is considered valid only when **two or more independent modules corrobo
 ### Output
 - Final correlated report (CSV / JSON)
 - No report is generated if no corroborated evidence exists
+![System Architecture](o4.png)
 
 ---
 
